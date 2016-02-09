@@ -33,6 +33,7 @@ footer-links:
 
 # page links
 pages_list:
+  Blog: '/'
   About: '/about'
   Archive: '/archive'
 
