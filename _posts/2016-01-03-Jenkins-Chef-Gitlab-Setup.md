@@ -1,13 +1,13 @@
 ---
 layout: post
-title: Cookbook CI with Jenkins, Gitlab and Docker
+title: Cookbook CI - Jenkins, Gitlab and Docker prt. 1
 ---
 
-My current cookbook development environment consists of a local Gitlab repo which Jenkins queries, runs automated tests and uploads to the Chef server upon passing.  The Chef server and Gitlab repo run as KVM guests on a CentOS 6 host.  The Jenkins server and Chef workstation are seperate descrete CentOS 6 machines.
+My current home cookbook development environment consists of a local Gitlab repo which Jenkins queries, runs automated tests and uploads to the Chef server upon passing.  For demo purposes, the Chef server and Gitlab repo run as KVM guests on a CentOS 6 host.  The Jenkins server and Chef workstation are separate discrete CentOS 6 machines.
+
+UPDATE:  A similar setup exists now in my work environment.
 
 ## Jenkins Intall
-
-Lets begin with the Jeninks install.
 
 - yum update
 - check java version
@@ -19,7 +19,7 @@ OpenJDK Runtime Environment (rhel-2.6.1.3.el6_7-x86_64 u85-b01)
 OpenJDK 64-Bit Server VM (build 24.85-b03, mixed mode)
 {% endhighlight %}
 
-- Download and Install Jenkins
+- Download and install Jenkins
 {%highlight bash %}
 wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo
 rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key
@@ -34,7 +34,7 @@ iptables -I INPUT -p tcp -m tcp --dport 443 -j ACCEPT
 service iptables save
 {% endhighlight %}
 
-- Start Jenkins and enable service
+- Start Jenkins and add to chkconfig
 {%highlight bash %}
 service jenkins start
 chkconfig jenkins on
@@ -42,7 +42,7 @@ chkconfig jenkins on
 
 ## Chef Server Install
 
-- Create a machine with a fqdn.  I'm using a KVM CentOS 6.6 guest named grant.lan.
+- Build a machine, making sure to use a fqdn.  My test machine runs CentOS 6.6
 - Add the fqdn to /etc/hosts
 {% highlight text %}
 echo "ip_address fqdn_hostname" >> /etc/hosts
@@ -71,7 +71,7 @@ chef-server-ctl org-create org_short_name "org_name" --association_user username
 ## Create Chef workstation on CentOS 6.
 
 - Add hostname to /etc/hosts
-- Download the chefdk rpm from Opscode
+- Download the chefdk rpm from [Opscode](https://downloads.chef.io/chef-dk/)
 - Install chefdk rpm
 {% highlight bash %}
 rpm -Uhv chefdk.rpm
@@ -82,19 +82,19 @@ rpm -Uhv chefdk.rpm
 chef verify
 {% endhighlight %}
 
-- Add ruby to the .bash_profile and refresh the bash profile.  Alternatively, logging in and out will update the bash profile.
+- Add ruby to the \.bash\_profile and refresh the bash profile.  Alternatively, logging in and out will also refresh the .bash_profile.
 {% highlight text %}
 echo 'eval "$(chef shell-init bash)"' >> ~/.bash_profile
 . ~/.bash_profile
 {% endhighlight %}
 
-- Install and setup git.  Check https://git-scm.com for guidance.
+- Install and setup git.  Check the [Git site](https://git-scm.com for guidance) for guidance.
 - Create the local chef-repo
 {% highlight bash %}
 chef generate repo chef-repo
 {% endhighlight %}
 
-- Copy the validator.pem and admin.pem locaed on the chef server to ~/chef-repo/.chef.  If missing, create the .chef directory.
+- Copy the validator.pem and admin.pem located on the chef server to ~/.chef.  If missing, create the .chef directory.
 
 
 - Create a knife.rb file in .chef.
@@ -122,7 +122,7 @@ output:
 
 	ERROR: Errno::EHOSTUNREACH: No route to host - connect(2) for "grant.lan" port 443
 {% endhighlight %}
-Since this is a test environment, just turn off the ssl verificaiton.
+Since this is a test environment, just turn off the ssl verification.
 {% highlight text %}
 echo 'ssl_verify_mode :verify_none' >> /etc/chef/client.rb
 cat /etc/chef/client.rb
@@ -143,5 +143,44 @@ chef-client
 knife node list
 {% endhighlight %}
 
+## Gitlab Install and Setup
 
+For simplicity sake, Gitlab is essentially a local Github-like repository.  This provides a solution when Github functionality is needed within a private cloud.  Visit [Gitlab](https://about.gitlab.com/) for more information.
 
+- Follow the [official Gitlab install for CentOS 6](https://about.gitlab.com/downloads/#centos6)
+
+- Create a new repository on Gitlab for the test cookbook.
+
+- Navigate to the test cookbook and setup gitlab remote
+
+{% highlight bash %}
+git remote add origin gti@chef_workstation:path_to_cookbook/test_cookbook.git
+{% endhighlight %}
+
+- Push to master branch
+
+{% highlight bash %}
+git push -u origin master
+{% endhighlight %}
+
+## Docker Install and Setup
+Basic install of Docker on CentOS 6.
+- Add the epel repo
+{% highlight bash %}
+rpm -iUhv http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+{% endhighlight %}
+
+- After a yum update, install docker
+{% highlight bash %}
+yum install -y docker-io
+{% endhighlight %}
+
+- Start the docker service
+{% highlight bash %}
+service docker start
+{% endhighlight %}
+
+- Add docker to chkconfig
+{% highlight bash %}
+chkconfig docker on
+{% endhighlight %}
