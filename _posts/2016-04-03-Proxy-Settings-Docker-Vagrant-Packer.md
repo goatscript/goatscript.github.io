@@ -18,10 +18,6 @@ RUN echo 'proxy=http://xx.xx.xx.xx:xx' >> /etc/yum.conf
 RUN echo 'proxy_username'=""' >> /etc/yum.conf
 RUN echo 'proxy_password'=""' >> /etc/yum.conf
 {% endhighlight %}
-- In order to get the bash profile to reload, I added a source command upon entry.
-{% highlight text %}
-ENTRYPOINT /bin/bash | source /root/.bash_profile
-{% endhighlight %}
 
 There are probably different, or better, ways to do this, but for now this works and allows me to use my dockerfiles behind a proxy.
 
